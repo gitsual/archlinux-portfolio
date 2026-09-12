@@ -1,0 +1,8 @@
+{
+  "command": [
+    "/usr/bin/printf",
+    "portable task executed\n"
+  ],
+  "working_directory": "~",
+  "environment": {}
+}

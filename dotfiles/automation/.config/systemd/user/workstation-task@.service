@@ -1,0 +1,18 @@
+[Unit]
+Description=Portable workstation task: %i
+Documentation=file://%h/.config/workstation/tasks/%i.json
+ConditionPathExists=%h/.config/workstation/tasks/%i.json
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/env workstation-task-runner %i
+Restart=on-failure
+RestartSec=5s
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+
+[Install]
+WantedBy=default.target

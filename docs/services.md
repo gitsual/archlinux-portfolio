@@ -15,7 +15,13 @@
 - `ufw.service`;
 - `fstrim.timer`.
 
-Application servers, private synchronization jobs, gaming watchdogs and machine-bound device services are intentionally not copied. Their reusable ideas are represented by the generic audio profiles, storage architecture and timer patterns without publishing private paths, service endpoints or device identities.
+## Generic graphical session
+
+The optional `desktop-login` profile installs greetd/tuigreet and a generic Hyprland session. It is opt-in so the portfolio does not replace an existing display manager unexpectedly. The VM profile adds QEMU/SPICE guest integration without forcing it onto physical hardware.
+
+## Portable private-function layer
+
+Application servers, synchronization jobs, gaming watchdogs and machine-bound services are not copied with their private parameters. Their behavior can instead be represented by `workstation-task@.service`, `workstation-task@.timer` and destination-local JSON task descriptions. See [Portable automations](automations.md).
 
 ## Update cycle
 

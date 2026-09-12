@@ -1,5 +1,6 @@
 # Local test and audit output
 .audit/
+.vm-test/
 *.local.txt
 *.log
 

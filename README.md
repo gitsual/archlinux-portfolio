@@ -18,6 +18,9 @@ A reproducible, security-reviewed version of my real Arch Linux workstation: Way
 | Security | UFW, ClamAV, rkhunter, Lynis, KeePassXC | Default-deny inbound firewall, fresh signatures and scheduled audits |
 | Storage | Btrfs system/home + native and shared data tiers | Fast system disk, separated bulk data, safe optional mounts |
 | Deployment | Pacman manifests + GNU Stow | Reviewed dependencies, reversible conflicts and idempotent links |
+| Session | greetd + tuigreet | Optional generic graphical login without machine-bound display-manager state |
+| Automation | systemd task templates + JSON runner | Reusable services, sync jobs, watchdogs and schedules without private parameters |
+| VM validation | QEMU/KVM + official Arch cloud image | Real isolated package installation, deployment and startup checks |
 | Publication | Custom privacy scanner + Gitleaks | Scan source candidates, tracked tree and Git history |
 
 ## Quick start
@@ -35,11 +38,25 @@ Install official packages and deploy all user configuration:
 ./scripts/bootstrap.sh
 ```
 
-Apply the reviewed system security/Bluetooth profile only after a dry run:
+Apply the reviewed system profiles only after a dry run:
 
 ```bash
 ./scripts/apply-system.sh --dry-run
 ./scripts/bootstrap.sh --no-install --system
+```
+
+For a complete generic graphical login, add the opt-in profile:
+
+```bash
+./scripts/bootstrap.sh --desktop-login
+./scripts/apply-system.sh --dry-run --desktop-login
+```
+
+Validate the current tree in a real isolated Arch VM, or keep a graphical VM for manual testing:
+
+```bash
+./scripts/test-vm.sh
+./scripts/test-vm.sh --gui
 ```
 
 Deploy selected packages:
@@ -61,11 +78,12 @@ dotfiles/              User-level Stow packages
   audio/               Portable PipeWire/WirePlumber baseline
   theme/ shell/        GTK/KDE visual defaults and safe shell baseline
   security/            User malware timer and audit command
-system/                Reviewed system-level templates
-profiles/              Optional NVIDIA and hardware-specific audio profiles
-packages/              Official/AUR manifests
-docs/                  Architecture, audit and LinkedIn copy
-scripts/               Bootstrap, deploy, update, render and audit tools
+  automation/          Generic local service and timer framework
+system/                Reviewed system-level templates, including optional login
+profiles/              Optional GPU, audio, automation and VM package profiles
+packages/              Base and composable official/AUR manifests
+docs/                  Architecture, coverage, VM validation and publication copy
+scripts/               Bootstrap, deploy, render, audit and real-VM test tools
 ```
 
 ## Documentation
@@ -75,6 +93,8 @@ scripts/               Bootstrap, deploy, update, render and audit tools
 - [Security architecture](docs/security-architecture.md)
 - [Neovim and Avante](docs/neovim.md)
 - [Services and maintenance](docs/services.md)
+- [Portable automations](docs/automations.md)
+- [Virtual-machine validation](docs/virtual-machine.md)
 - [Sanitization decisions](docs/design-notes.md)
 - [Workstation coverage matrix](docs/coverage-matrix.md)
 - [Publication audit](docs/audit-report.md)
@@ -87,7 +107,7 @@ The wallpaper is also local-only: add it to `hyprpaper.conf` after deployment. T
 
 ## Verification
 
-`scripts/check.sh` validates shell, Python, JSON, Lua, systemd units, package manifests, symlinks, file types and privacy patterns, runs Gitleaks, and performs both a dry run and a two-pass deployment regression in temporary HOMEs. `scripts/test-neovim.sh` performs the separate clean editor installation and startup assertions without calling external AI services. Publication also requires scanning the exact staged Git objects and resulting commit before push.
+`scripts/check.sh` validates shell, Python, JSON, Lua, systemd units, all package manifests, symlinks, file types and privacy patterns, runs Gitleaks, and performs both a dry run and a two-pass deployment regression in temporary HOMEs. `scripts/test-neovim.sh` performs the separate clean editor installation without calling external AI services. `scripts/test-vm.sh` installs and exercises the current tree in an official Arch QEMU/KVM guest. Publication also requires scanning the exact staged Git objects and resulting commit before push.
 
 ## License
 

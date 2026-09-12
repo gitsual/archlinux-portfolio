@@ -18,24 +18,31 @@ fi
 printf '%s\n' '[3/8] structured configuration'
 python -c 'import ast, pathlib; ast.parse(pathlib.Path("scripts/privacy-scan.py").read_text())'
 python -c 'import ast, pathlib; ast.parse(pathlib.Path("scripts/configure-audio.py").read_text())'
+python -c 'import ast, pathlib; ast.parse(pathlib.Path("dotfiles/automation/.local/bin/workstation-task-runner").read_text())'
 python -m json.tool dotfiles/waybar/.config/waybar/config >/dev/null
+python -m json.tool profiles/automation/example.json >/dev/null
 while IFS= read -r -d '' file; do
 	nvim --headless --clean -u NONE -c "lua assert(loadfile([[${file}]]))" -c qa
 done < <(find dotfiles/nvim -type f -name '*.lua' -print0)
-systemd-analyze verify dotfiles/security/.config/systemd/user/*.service dotfiles/security/.config/systemd/user/*.timer
+systemd-analyze verify \
+	dotfiles/security/.config/systemd/user/*.service \
+	dotfiles/security/.config/systemd/user/*.timer \
+	dotfiles/automation/.config/systemd/user/*.service \
+	dotfiles/automation/.config/systemd/user/*.timer
 
 printf '%s\n' '[4/8] package manifests'
-for manifest in packages/pacman.txt packages/aur.txt; do
+for manifest in packages/*.txt; do
+	[[ "$manifest" == *.local.txt ]] && continue
 	[[ -f "$manifest" ]]
 	diff -u "$manifest" <(LC_ALL=C sort -u "$manifest")
 done
 
 printf '%s\n' '[5/8] symlinks and unexpected binaries'
-if find . -path ./.git -prune -o -type l ! -exec test -e {} \; -print -quit | grep -q .; then
+if find . \( -path ./.git -o -path ./.vm-test -o -path ./.audit \) -prune -o -type l ! -exec test -e {} \; -print -quit | grep -q .; then
 	printf '%s\n' 'broken symlink found' >&2
 	exit 1
 fi
-if find . -path ./.git -prune -o -type f -print0 | xargs -0 file | grep -Ev 'text|empty|SVG|JSON|Python script|shell script' >/dev/null; then
+if find . \( -path ./.git -o -path ./.vm-test -o -path ./.audit \) -prune -o -type f -print0 | xargs -0 file | grep -Ev 'text|empty|SVG|JSON|Python script|shell script' >/dev/null; then
 	printf '%s\n' 'unexpected binary file found' >&2
 	exit 1
 fi

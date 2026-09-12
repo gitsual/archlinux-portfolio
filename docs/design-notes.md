@@ -13,8 +13,8 @@ The source workstation combines Arch Linux, Hyprland, three launchers, a highly 
 | NVIDIA environment | Optional hardware profile, not forced on every machine |
 | Private wallpaper and desktop content | Purpose-built SVG preview and local wallpaper instructions |
 | Neovim code containing an embedded credential | Secret-bearing block removed; provider auth comes from runtime environment or locally authenticated proxies |
-| Shell integrations containing credentials/private endpoints | Replaced by a minimal safe shell package |
-| Personal server/sync/game services | Excluded; reusable timer, storage and audio patterns retained |
+| Shell integrations containing credentials/private endpoints | Safe portable baseline plus untracked `local.bash` extension point |
+| Personal server/sync/game services | Generic JSON-driven systemd service/timer lifecycle; private commands and endpoints stay destination-local |
 | Backups, histories, caches and nested Git data | Excluded before import |
 
 ## Engineering properties

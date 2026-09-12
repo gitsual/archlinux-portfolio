@@ -1,0 +1,9 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Ignored local VM and audit artifacts; neither path is tracked"
+paths = [
+  '''^\.vm-test/''',
+  '''^\.audit/'''
+]

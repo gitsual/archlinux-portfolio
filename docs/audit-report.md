@@ -2,7 +2,7 @@
 
 ## Scope
 
-The repository is built from an explicit allowlist covering desktop, launchers, editor, audio/Bluetooth, theme, shell, security services and storage architecture. Unrelated project repositories remained outside scope. Credentials, key stores, browser profiles, histories, private media, caches, generated state, backups and nested repositories were excluded.
+The repository is built from an explicit allowlist covering desktop, graphical login, launchers, editor, audio/Bluetooth, theme, shell, security, storage architecture and generalized user automations. Machine-bound service behavior is represented by parameterized local tasks rather than copied endpoints or identities. Credentials, key stores, browser profiles, histories, private media, caches, generated state, VM artifacts, backups and nested repositories remain outside the published tree.
 
 ## Source audit
 
@@ -31,9 +31,11 @@ The source Neovim tree contained a credential-like assignment in commented legac
 The following gates were rerun on the final working tree:
 
 - `scripts/check.sh`: passed all eight stages, including syntax/ShellCheck, structured configuration, systemd verification, sorted manifests, symlink/file-type checks, privacy scanning, Gitleaks over working files, disposable-HOME dry-run and deployment regression;
-- isolated Stow regression: two consecutive deployments preserved hashes for all 41 source dotfiles, backed up one pre-existing conflict exactly once and left links targeting repository sources;
-- `scripts/test-neovim.sh`: clean Lazy installation and startup passed; NvChad, Treesitter, Avante and cmp loaded; `cmp-async-path` came from the author's GitHub mirror; the source lockfile hash remained unchanged;
-- package validation: all 55 official manifest entries resolved individually inside an `archlinux:base` Podman container, the AUR manifest had no active entries, and all curated packages were present on the local host;
-- `bootstrap.sh --dry-run` ran with a disposable HOME and `apply-system.sh --dry-run` completed without changing packages, services, audio, Bluetooth or firewall state.
+- isolated Stow regression: two consecutive deployments preserved hashes for all 44 source dotfiles, backed up one pre-existing conflict exactly once and left links targeting repository sources;
+- `scripts/test-neovim.sh`: clean Lazy installation and startup passed locally and in the VM; NvChad, Treesitter, Avante and cmp loaded; `cmp-async-path` came from the author's GitHub mirror; the source lockfile hash remained unchanged; transient network failures are retried at most three times and only an error-free final log is accepted;
+- package validation: the 55-package base and the composed 59-package base/login/VM profiles resolved inside `archlinux:base`; the AUR manifest had no active entries;
+- real VM acceptance: an official checksum-verified Arch cloud image booted under KVM with 8 GiB RAM and 4 vCPUs; all composed packages installed, all Stow packages deployed, the eight-stage checker and clean Neovim test passed, Hyprland reported `config ok`, and required executables were asserted;
+- graphical VM: the tested overlay rebooted with greetd active and enabled and the static, device-activated QEMU guest agent active through its virtio channel;
+- `bootstrap.sh --dry-run` ran with a disposable HOME and modular `apply-system.sh --dry-run` completed without changing host packages, services, audio, Bluetooth or firewall state.
 
 Git history and exact staged-object scans are performed after repository initialization. The published commit and remote are verified externally rather than embedded as a self-referential identifier in that same commit.

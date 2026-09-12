@@ -2,14 +2,14 @@
 set -Eeuo pipefail
 
 repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
-packages=(hypr waybar kitty dunst rofi wofi nvim shell theme audio security)
+packages=(hypr waybar kitty dunst rofi wofi nvim shell theme audio security automation)
 dry_run=false
 
 usage() {
 	cat <<'USAGE'
 Usage: scripts/deploy.sh [--all] [--dry-run] [package ...]
 
-Packages: hypr waybar kitty dunst rofi wofi nvim shell theme audio security
+Packages: hypr waybar kitty dunst rofi wofi nvim shell theme audio security automation
 Existing files are moved to a timestamped backup; nothing is deleted.
 USAGE
 }

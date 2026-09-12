@@ -18,3 +18,10 @@ alias n='nvim'
 bind 'set completion-ignore-case on'
 bind 'set show-all-if-ambiguous on'
 PS1='\[\e[38;5;203m\]\u\[\e[0m\]@\[\e[38;5;143m\]\h\[\e[0m\] \[\e[38;5;180m\]\w\[\e[0m\] \\$ '
+
+# Machine, employer and credential-bearing integrations belong in this optional
+# local extension. It is never created or tracked by the portfolio.
+if [[ -r "$HOME/.config/shell/local.bash" ]]; then
+  # shellcheck disable=SC1091
+  source "$HOME/.config/shell/local.bash"
+fi
