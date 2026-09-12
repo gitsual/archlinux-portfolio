@@ -1,0 +1,10 @@
+[Unit]
+Description=Weekly ClamAV scan of the user home
+ConditionPathExists=/var/lib/clamav
+
+[Service]
+Type=oneshot
+Nice=10
+IOSchedulingClass=idle
+ExecStart=/usr/bin/clamscan --recursive --infected --exclude-dir=^%h/.cache --exclude-dir=^%h/.local/share/Trash %h
+SuccessExitStatus=0 1

@@ -1,0 +1,18 @@
+# Rendered by scripts/configure-audio.py; do not commit the rendered file.
+monitor.alsa.rules = [
+  {
+    matches = [ { node.name = "@MIC_NODE@" } ]
+    actions = {
+      update-props = {
+        audio.rate = 96000
+        audio.format = "S24_3LE"
+        audio.channels = 1
+        audio.position = [ MONO ]
+        api.alsa.period-size = 1024
+        api.alsa.headroom = 0
+        node.pause-on-idle = false
+        node.description = "Studio USB microphone"
+      }
+    }
+  }
+]

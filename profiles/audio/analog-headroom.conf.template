@@ -1,0 +1,7 @@
+# Rendered by scripts/configure-audio.py; do not commit the rendered file.
+monitor.alsa.rules = [
+  {
+    matches = [ { node.name = "@SINK_NODE@" } ]
+    actions = { update-props = { api.alsa.headroom = 1024 } }
+  }
+]

@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+printf '%s\n' '== ClamAV =='
+clamscan --version
+systemctl is-active clamav-freshclam.service
+printf '%s\n' '== Firewall =='
+sudo ufw status verbose
+printf '%s\n' '== Rootkit checks =='
+sudo rkhunter --check --sk --rwo
+printf '%s\n' '== Lynis =='
+sudo lynis audit system --quick

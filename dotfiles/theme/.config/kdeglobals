@@ -1,0 +1,13 @@
+[KFileDialog Settings]
+Allow Expansion=false
+Automatically select filename extension=true
+Breadcrumb Navigation=true
+Show Bookmarks=false
+Show Full Path=false
+Show Inline Previews=true
+Show Speedbar=true
+Show hidden files=false
+Sort by=Date
+Sort directories first=true
+Sort reversed=true
+View Style=DetailTree

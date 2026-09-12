@@ -1,0 +1,25 @@
+# Local test and audit output
+.audit/
+*.local.txt
+*.log
+
+# Editor and OS state
+.DS_Store
+*.swp
+*.swo
+*~
+
+# Never publish credentials or private key material
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.kdbx
+**/.ssh/**
+**/.gnupg/**
+**/credentials*
+**/tokens*
+**/cookies*

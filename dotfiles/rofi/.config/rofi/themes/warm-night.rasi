@@ -1,0 +1,23 @@
+* {
+    bg0: #2D1F2Df2;
+    bg1: #43363f;
+    bg2: #5a4855;
+    fg0: #E8D5AB;
+    fg2: #c0ad95;
+    accent: #E1777D;
+    urgent: #BD6161;
+    transparent: #00000000;
+    background-color: @transparent;
+    text-color: @fg0;
+}
+window { location: center; anchor: center; width: 850px; background-color: @bg0; border: 3px; border-color: @accent; border-radius: 12px; }
+mainbox { spacing: 20px; padding: 20px; }
+inputbar { background-color: @bg1; border: 0 0 2px 0; border-color: @accent; border-radius: 8px; padding: 12px; spacing: 10px; children: [ prompt, entry ]; }
+prompt { text-color: @accent; }
+entry { placeholder: "Type to search..."; placeholder-color: @fg2; }
+listview { columns: 1; lines: 8; spacing: 8px; }
+element { border-radius: 8px; padding: 10px 15px; spacing: 10px; }
+element normal.normal { background-color: @bg1; }
+element selected.normal { background-color: @accent; text-color: @bg0; }
+element normal.urgent { background-color: @urgent; text-color: @bg0; }
+element-icon { size: 28px; }

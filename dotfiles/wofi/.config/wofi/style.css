@@ -1,0 +1,18 @@
+window {
+    background-color: rgba(45, 31, 45, 0.95);
+    border: 2px solid #E1777D;
+    border-radius: 15px;
+}
+#input {
+    margin: 8px;
+    padding: 8px;
+    border: 2px solid #979367;
+    border-radius: 10px;
+    color: #E8D5AB;
+    background-color: rgba(67, 54, 63, 0.7);
+    font-family: "JetBrains Mono Nerd Font";
+}
+#inner-box { margin: 8px; background: transparent; }
+#entry { padding: 8px; border-radius: 10px; }
+#entry:selected { background-color: #E1777D; color: #2D1F2D; }
+#text { color: #E8D5AB; margin-left: 10px; }
