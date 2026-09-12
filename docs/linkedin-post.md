@@ -12,8 +12,9 @@ Incluye:
 - perfiles reproducibles de PipeWire, WirePlumber y Bluetooth para equilibrar calidad, latencia y estabilidad;
 - una arquitectura recomendada de almacenamiento: Btrfs para sistema y HOME, datos Linux separados y una capa compartida opcional;
 - UFW, ClamAV, rkhunter y Lynis como defensa y auditoría por capas;
-- instalación con Pacman y GNU Stow, copias de seguridad automáticas ante conflictos y perfiles opcionales por hardware;
-- pruebas de idempotencia en un HOME temporal;
+- bootstrap basado en Pacman y GNU Stow, copias de seguridad automáticas ante conflictos y perfiles opcionales por hardware;
+- pruebas de doble despliegue en un HOME temporal y de instalación limpia de Neovim en un sandbox XDG;
+- resolución de los 55 paquetes oficiales dentro de Arch aislado, sin instalar ni cambiar servicios en el host;
 - escaneo de secretos, rutas personales, identificadores de dispositivos, redes privadas y del historial Git antes de publicar.
 
 La parte más interesante no ha sido guardar dotfiles, sino convertir decisiones muy ligadas a una máquina concreta en una arquitectura pública, documentada y segura. Los UUID, nombres de discos, nodos de audio, credenciales y rutas locales se generan o configuran en cada equipo y nunca forman parte del repositorio.
