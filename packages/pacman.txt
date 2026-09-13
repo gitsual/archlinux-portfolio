@@ -43,6 +43,7 @@ shfmt
 slurp
 sof-firmware
 stow
+swaybg
 ttf-fira-code
 ttf-jetbrains-mono-nerd
 ufw

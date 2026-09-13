@@ -103,7 +103,7 @@ scripts/               Bootstrap, deploy, render, audit and real-VM test tools
 
 The portable Hyprland baseline does not force a GPU. To reproduce the NVIDIA branch used by the source workstation, replace the deployed `hardware.conf` symlink with a local copy of `profiles/hardware/nvidia-hyprland.conf`. Audio device node names are rendered locally by `scripts/configure-audio.py` and are never committed.
 
-The wallpaper is also local-only: add it to `hyprpaper.conf` after deployment. The public SVG is a purpose-built preview, not a desktop capture containing private data.
+The original Warm Night · Nocturne wallpaper is bundled as SVG source and a 4K PNG. The desktop starts it with `swaybg`, including on virtual GPUs without accelerated rendering. The header SVG is a stylized preview, not a real desktop capture.
 
 ## Verification
 

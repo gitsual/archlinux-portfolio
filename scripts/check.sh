@@ -42,11 +42,13 @@ if find . \( -path ./.git -o -path ./.vm-test -o -path ./.audit \) -prune -o -ty
 	printf '%s\n' 'broken symlink found' >&2
 	exit 1
 fi
-if find . \( -path ./.git -o -path ./.vm-test -o -path ./.audit \) -prune -o -type f -print0 | xargs -0 file | grep -Ev 'text|empty|SVG|JSON|Python script|shell script' >/dev/null; then
+if find . \( -path ./.git -o -path ./.vm-test -o -path ./.audit \) -prune -o -type f ! -path './dotfiles/hypr/.local/share/wallpapers/warm-night.png' -print0 | xargs -0 file | grep -Ev 'text|empty|SVG|JSON|Python script|shell script' >/dev/null; then
 	printf '%s\n' 'unexpected binary file found' >&2
 	exit 1
 fi
 
+# Only the original bundled PNG is allowlisted; validate its format and dimensions.
+python -c 'from pathlib import Path; import struct; p=Path("dotfiles/hypr/.local/share/wallpapers/warm-night.png").read_bytes(); assert p[:8] == b"\x89PNG\r\n\x1a\n"; assert struct.unpack(">II", p[16:24]) == (3840, 2160)'
 printf '%s\n' '[6/8] privacy and secret scan'
 python scripts/privacy-scan.py .
 if command -v gitleaks >/dev/null; then
