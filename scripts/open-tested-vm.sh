@@ -25,12 +25,19 @@ for file in system.qcow2 seed.iso repository.iso id_ed25519; do
 		exit 1
 	}
 done
+bash "$repo_root/scripts/vm-desktop.sh"
+bash "$repo_root/scripts/vm-keyboard.sh"
 if [[ -f "$pidfile" ]] && kill -0 "$(<"$pidfile")" 2>/dev/null; then
 	printf '%s\n' 'Tested VM is already running'
 	exit 0
 fi
 
 host_address="$(printf '%d.%d.%d.%d' 127 0 0 1)"
+console_keymap="${VM_CONSOLE_KEYMAP:-es}"
+[[ "$console_keymap" =~ ^[A-Za-z0-9_-]+$ ]] || {
+	printf 'Invalid console keymap name: %s\n' "$console_keymap" >&2
+	exit 2
+}
 port="${VM_SSH_PORT:-$(python -c 'import socket; s=socket.socket(); s.bind(("localhost", 0)); print(s.getsockname()[1]); s.close()')}"
 memory="${VM_MEMORY_MB:-8192}"
 cpus="${VM_CPUS:-4}"
@@ -48,7 +55,7 @@ qemu-system-x86_64 \
 	-device virtserialport,chardev=vdagent,name=com.redhat.spice.0 \
 	-chardev "socket,path=$run/qga.sock,server=on,wait=off,id=qga0" \
 	-device virtserialport,chardev=qga0,name=org.qemu.guest_agent.0 \
-	-display gtk -device virtio-vga -daemonize -pidfile "$pidfile" \
+	-display gtk -device virtio-vga -device qemu-xhci -device usb-tablet -daemonize -pidfile "$pidfile" \
 	-serial "file:$run/interactive-serial.log"
 
 ssh_opts=(-i "$run/id_ed25519" -p "$port" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5)
@@ -62,12 +69,18 @@ $ready || {
 	exit 1
 }
 
-console_passphrase="$(python -c 'import secrets; print(secrets.token_urlsafe(12))')"
-printf 'portfolio:%s\n' "$console_passphrase" | ssh "${ssh_opts[@]}" "portfolio@$host_address" 'sudo chpasswd'
+# Validated keymap is intentionally expanded client-side.
+# shellcheck disable=SC2029
+ssh "${ssh_opts[@]}" "portfolio@$host_address" "localectl list-keymaps | grep -Fxq -- '$console_keymap'"
+# Validated keymap is intentionally expanded client-side.
+# shellcheck disable=SC2029
+ssh "${ssh_opts[@]}" "portfolio@$host_address" "sudo localectl set-keymap -- '$console_keymap'"
 ssh "${ssh_opts[@]}" "portfolio@$host_address" 'cd "$HOME/archlinux-portfolio" && ./scripts/apply-system.sh --desktop-login --vm'
-printf 'user=portfolio\npassphrase=%s\nssh_port=%s\n' "$console_passphrase" "$port" >"$run/console-login.txt"
-chmod 600 "$run/console-login.txt"
+# Validated keymap is intentionally expanded client-side.
+# shellcheck disable=SC2029
+ssh "${ssh_opts[@]}" "portfolio@$host_address" "grep -Fxq -- 'KEYMAP=$console_keymap' /etc/vconsole.conf"
+printf 'ssh_port=%s\nconsole_keymap=%s\n' "$port" "$console_keymap" >"$run/console-login.txt"
 ssh "${ssh_opts[@]}" "portfolio@$host_address" 'sudo systemctl reboot' || true
 
-printf 'Interactive tested VM is running; login details: %s\n' "$run/console-login.txt"
+printf 'Interactive tested VM is running; the desktop logs in by itself. Details: %s\n' "$run/console-login.txt"
 printf 'Stop it with: %s --stop\n' "$repo_root/scripts/open-tested-vm.sh"

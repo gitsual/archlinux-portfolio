@@ -37,7 +37,7 @@ Alternatively, perform acceptance and graphical opening in one command:
 ./scripts/test-vm.sh --gui
 ```
 
-After automated acceptance, the opener enables only the generic graphical-login and VM guest-service modules, assigns a new random console passphrase, reboots and keeps the QEMU window running. The passphrase and SSH key exist only in ignored local VM state and are never committed. Stop it cleanly with:
+After automated acceptance, the opener enables the VM variant of the graphical login (the disposable guest user is logged straight into Hyprland, no greeter and no passphrase) and the guest-service modules, reboots and keeps the QEMU window running. The window is placed fullscreen on an empty host workspace so the guest is offered the whole monitor resolution (`VM_HOST_WORKSPACE` overrides the choice). The SSH key exists only in ignored local VM state and is never committed. Stop it cleanly with:
 
 ```bash
 ./scripts/open-tested-vm.sh --stop
@@ -48,6 +48,16 @@ Optional resource overrides:
 ```bash
 VM_MEMORY_MB=12288 VM_CPUS=6 ./scripts/test-vm.sh --gui
 ```
+
+## Keyboard and pointer in the graphical VM
+
+The guest is a full Hyprland desktop, so it wants the same shortcuts as the host. Both cannot own the keyboard at once, so ownership is switched explicitly and never inferred:
+
+- `scripts/vm-keyboard.sh` (run automatically by the graphical modes) adds session-only host bindings. `Ctrl+Alt+Home` toggles a Hyprland submap: outside it the host keeps every shortcut and unbound keys reach QEMU; inside it the only host binding is the toggle itself, so everything else, including `Super`, reaches the guest. A notification reports each switch. The bindings live in the running session only and disappear on a Hyprland reload; the host configuration is never rewritten. Override the key with `VM_TOGGLE_KEY` (a keysym name, `Ctrl+Alt` stays fixed).
+- `Ctrl+Alt+F1`-`F12` are consumed by the compositor before any user binding on either side, so they always switch the host virtual console. Switch guest consoles from inside the guest with `chvt`.
+- QEMU's own GTK hotkeys (`Ctrl+Alt+G`, `Ctrl+Alt+F`, `Ctrl+Alt+digit`) are handled by QEMU before the guest; the bundled desktop does not use `Ctrl+Alt` combinations, so nothing is lost.
+- The guest gets a USB tablet, so the pointer is absolute and works in both modes without a grab.
+- The guest console keymap follows `VM_CONSOLE_KEYMAP` (default `es`), validated against `localectl` and asserted in `/etc/vconsole.conf`; the bundled Hyprland layout is `es` as well, matching the source workstation.
 
 Stop a kept VM with its recorded PID, then remove `.vm-test/run` when its evidence is no longer needed. The verified base image remains cached to avoid a repeated download.
 

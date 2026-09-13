@@ -73,7 +73,10 @@ if $security; then
 	services+=(clamav-freshclam.service ufw.service fstrim.timer)
 fi
 if $desktop_login; then
-	install_config "$repo_root/system/etc/greetd/config.toml" /etc/greetd/config.toml
+	greetd_config=config.toml
+	# The disposable test VM logs its user straight into the desktop.
+	$vm_profile && greetd_config=config-vm.toml
+	install_config "$repo_root/system/etc/greetd/$greetd_config" /etc/greetd/config.toml
 	services+=(greetd.service)
 fi
 if $vm_profile; then

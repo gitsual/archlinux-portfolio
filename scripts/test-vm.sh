@@ -8,6 +8,11 @@ run="$work_root/run"
 image_url="${ARCH_VM_IMAGE_URL:-https://geo.mirror.pkgbuild.com/images/latest/Arch-Linux-x86_64-cloudimg.qcow2}"
 keep=false
 gui=false
+console_keymap="${VM_CONSOLE_KEYMAP:-es}"
+[[ "$console_keymap" =~ ^[A-Za-z0-9_-]+$ ]] || {
+	printf 'Invalid console keymap name: %s\n' "$console_keymap" >&2
+	exit 2
+}
 
 usage() {
 	cat <<'USAGE'
@@ -17,7 +22,8 @@ Build and test the current repository in an official Arch cloud-image VM.
   --keep  Preserve the overlay, logs and seed media after the test
   --gui   Open a QEMU window and keep the tested VM running for manual use
 
-Overrides: VM_WORKDIR, ARCH_VM_IMAGE_URL, VM_MEMORY_MB, VM_CPUS, VM_SSH_PORT.
+Overrides: VM_WORKDIR, ARCH_VM_IMAGE_URL, VM_MEMORY_MB, VM_CPUS, VM_SSH_PORT,
+VM_CONSOLE_KEYMAP (defaults to es).
 No host packages, services, firewall rules or user configuration are changed.
 USAGE
 }
@@ -95,8 +101,9 @@ fi
 memory="${VM_MEMORY_MB:-8192}"
 cpus="${VM_CPUS:-4}"
 display_args=(-display none)
-$gui && display_args=(-display gtk -device virtio-vga)
+$gui && display_args=(-display gtk -device virtio-vga -device qemu-xhci -device usb-tablet)
 
+$gui && bash "$repo_root/scripts/vm-desktop.sh"
 qemu-system-x86_64 \
 	-enable-kvm -machine q35,accel=kvm -cpu host \
 	-smp "$cpus" -m "$memory" \
@@ -172,10 +179,20 @@ grep -Fq 'VM_ACCEPTANCE: PASS' "$run/guest-test.log"
 printf 'Arch VM acceptance: passed (KVM, %s MiB, %s vCPU, SSH port %s)\n' "$memory" "$cpus" "$port"
 
 if $gui; then
-	console_passphrase="$(python -c 'import secrets; print(secrets.token_urlsafe(12))')"
-	printf 'portfolio:%s\n' "$console_passphrase" | ssh "${ssh_opts[@]}" "portfolio@$host_address" 'sudo chpasswd'
-	ssh "${ssh_opts[@]}" "portfolio@$host_address" 'cd "$HOME/archlinux-portfolio" && ./scripts/apply-system.sh --desktop-login --vm && sudo systemctl reboot' || true
-	printf 'Interactive VM kept running. Login: portfolio  Passphrase: %s\n' "$console_passphrase"
+	# Validated keymap is intentionally expanded client-side.
+	# shellcheck disable=SC2029
+	ssh "${ssh_opts[@]}" "portfolio@$host_address" "localectl list-keymaps | grep -Fxq -- '$console_keymap'"
+	# Validated keymap is intentionally expanded client-side.
+	# shellcheck disable=SC2029
+	ssh "${ssh_opts[@]}" "portfolio@$host_address" "sudo localectl set-keymap -- '$console_keymap'"
+	ssh "${ssh_opts[@]}" "portfolio@$host_address" 'cd "$HOME/archlinux-portfolio" && ./scripts/apply-system.sh --desktop-login --vm'
+	# Validated keymap is intentionally expanded client-side.
+	# shellcheck disable=SC2029
+	ssh "${ssh_opts[@]}" "portfolio@$host_address" "grep -Fxq -- 'KEYMAP=$console_keymap' /etc/vconsole.conf"
+	printf 'ssh_port=%s\nconsole_keymap=%s\n' "$port" "$console_keymap" >"$run/console-login.txt"
+	ssh "${ssh_opts[@]}" "portfolio@$host_address" 'sudo systemctl reboot' || true
+	bash "$repo_root/scripts/vm-keyboard.sh"
+	printf 'Interactive VM kept running; the desktop logs in by itself. Details: %s\n' "$run/console-login.txt"
 	printf 'SSH: ssh -i %s -p %s portfolio@%s\n' "$run/id_ed25519" "$port" "$host_address"
 elif $keep; then
 	printf 'VM artifacts kept at %s\n' "$run"
