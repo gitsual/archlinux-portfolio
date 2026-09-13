@@ -25,6 +25,10 @@ for file in system.qcow2 seed.iso repository.iso id_ed25519; do
 		exit 1
 	}
 done
+# Refresh the guest's repository copy so the opened VM runs the current tree,
+# not the tree that was present when the overlay was accepted.
+tar --exclude=.git --exclude=.vm-test -czf "$run/repository.tar.gz" -C "$repo_root" .
+xorriso -as mkisofs -quiet -output "$run/repository.iso" -volid PORTFOLIO -joliet -rock "$run/repository.tar.gz"
 bash "$repo_root/scripts/vm-desktop.sh"
 bash "$repo_root/scripts/vm-keyboard.sh"
 if [[ -f "$pidfile" ]] && kill -0 "$(<"$pidfile")" 2>/dev/null; then
@@ -55,7 +59,7 @@ qemu-system-x86_64 \
 	-device virtserialport,chardev=vdagent,name=com.redhat.spice.0 \
 	-chardev "socket,path=$run/qga.sock,server=on,wait=off,id=qga0" \
 	-device virtserialport,chardev=qga0,name=org.qemu.guest_agent.0 \
-	-display gtk -device virtio-vga -device qemu-xhci -device usb-tablet -daemonize -pidfile "$pidfile" \
+	-display gtk,full-screen=on -device virtio-vga -device qemu-xhci -device usb-tablet -daemonize -pidfile "$pidfile" \
 	-serial "file:$run/interactive-serial.log"
 
 ssh_opts=(-i "$run/id_ed25519" -p "$port" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5)
@@ -75,7 +79,20 @@ ssh "${ssh_opts[@]}" "portfolio@$host_address" "localectl list-keymaps | grep -F
 # Validated keymap is intentionally expanded client-side.
 # shellcheck disable=SC2029
 ssh "${ssh_opts[@]}" "portfolio@$host_address" "sudo localectl set-keymap -- '$console_keymap'"
-ssh "${ssh_opts[@]}" "portfolio@$host_address" 'cd "$HOME/archlinux-portfolio" && ./scripts/apply-system.sh --desktop-login --vm'
+ssh "${ssh_opts[@]}" "portfolio@$host_address" 'bash -s' <<'GUEST'
+set -Eeuo pipefail
+sudo mkdir -p /mnt/portfolio
+mountpoint -q /mnt/portfolio || sudo mount -L PORTFOLIO -o ro /mnt/portfolio
+mkdir -p "$HOME/archlinux-portfolio"
+tar -xzf /mnt/portfolio/repository.tar.gz -C "$HOME/archlinux-portfolio"
+cd "$HOME/archlinux-portfolio"
+# A stopped VM can leave a stale pacman lock behind; only clear it when no pacman runs.
+if [ -e /var/lib/pacman/db.lck ] && ! pgrep -x pacman >/dev/null; then
+  sudo rm -f /var/lib/pacman/db.lck
+fi
+./scripts/bootstrap.sh --noconfirm --desktop-login --vm
+./scripts/apply-system.sh --desktop-login --vm
+GUEST
 # Validated keymap is intentionally expanded client-side.
 # shellcheck disable=SC2029
 ssh "${ssh_opts[@]}" "portfolio@$host_address" "grep -Fxq -- 'KEYMAP=$console_keymap' /etc/vconsole.conf"

@@ -37,7 +37,7 @@ Alternatively, perform acceptance and graphical opening in one command:
 ./scripts/test-vm.sh --gui
 ```
 
-After automated acceptance, the opener enables the VM variant of the graphical login (the disposable guest user is logged straight into Hyprland, no greeter and no passphrase) and the guest-service modules, reboots and keeps the QEMU window running. The window is placed fullscreen on an empty host workspace so the guest is offered the whole monitor resolution (`VM_HOST_WORKSPACE` overrides the choice). The SSH key exists only in ignored local VM state and is never committed. Stop it cleanly with:
+After automated acceptance, the opener enables the VM variant of the graphical login (the disposable guest user is logged straight into Hyprland, no greeter and no passphrase) and the guest-service modules, reboots and keeps the QEMU window running. QEMU runs in its own full-screen mode on an empty host workspace so the guest boots at the whole monitor resolution (`VM_HOST_WORKSPACE` overrides the workspace; `Ctrl+Alt+F` leaves QEMU's full screen). The opener refreshes the guest's copy of the repository from the current tree before applying profiles, so it always runs what is checked out, not what was accepted earlier. The SSH key exists only in ignored local VM state and is never committed. Stop it cleanly with:
 
 ```bash
 ./scripts/open-tested-vm.sh --stop

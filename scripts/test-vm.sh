@@ -101,7 +101,7 @@ fi
 memory="${VM_MEMORY_MB:-8192}"
 cpus="${VM_CPUS:-4}"
 display_args=(-display none)
-$gui && display_args=(-display gtk -device virtio-vga -device qemu-xhci -device usb-tablet)
+$gui && display_args=(-display "gtk,full-screen=on" -device virtio-vga -device qemu-xhci -device usb-tablet)
 
 $gui && bash "$repo_root/scripts/vm-desktop.sh"
 qemu-system-x86_64 \
