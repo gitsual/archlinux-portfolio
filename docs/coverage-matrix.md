@@ -26,6 +26,23 @@ This matrix is the publication contract. **Observed** means the component was se
 | Package manifests | Curated portable adaptation | Base `pacman.txt`/`aur.txt` plus composable `desktop-login.txt` and `vm.txt` | Curated functional dependencies, not a personal application inventory | Sorted/unique check; profile dry-runs; isolated Arch resolution and VM installation | Host-specific software remains local unless its reusable function has a public profile |
 | Deployment and backup behavior | Portable implementation | Stow packages plus conflict backup under XDG state | Operates only on allowlisted package files | Automated two-pass temporary-HOME test hashes every source file and confirms one conflict backup; the deploy-integrity gate deploys Stow and the machine-specific renders into a sandbox and asserts no path is claimed by both, every link resolves into `dotfiles/`, every render is a regular file outside the checkout, and the checkout is byte-identical afterwards | Tests never deploy to the real HOME |
 
+## GPU families
+
+The catalogue (`data/gpu-catalogue.tsv`) maps PCI ids to driver families and each family to a package manifest. A family is **Observed** only where someone has run it; everything else is a recommendation assembled from the Arch wiki and untested on hardware. The status words below are read by `scripts/check-gpu-catalogue.sh`, which fails when this table and the catalogue disagree.
+
+| Family | Matches | Manifest | Status |
+|---|---|---|---|
+| `nvidia_open` | NVIDIA, device ids 1e00 and up (Turing and newer) | `packages/gpu-nvidia_open.txt` | Observed on the author's workstation |
+| `nvidia_proprietary` | NVIDIA, device ids 1340 to 1dff (Maxwell, Pascal) | `packages/gpu-nvidia_proprietary.txt` | Recommendation, untested on hardware |
+| `nvidia_legacy_470` | NVIDIA, device ids 0f00 to 133f (Kepler); packages come from the AUR | `packages/gpu-nvidia_legacy_470.txt` | Recommendation, untested on hardware |
+| `intel_xe` | Intel, Lunar Lake, Battlemage and Panther Lake id ranges | `packages/gpu-intel_xe.txt` | Recommendation, untested on hardware |
+| `intel_i915` | Any other Intel GPU | `packages/gpu-intel_i915.txt` | Recommendation, untested on hardware |
+| `amd_amdgpu` | Any AMD GPU | `packages/gpu-amd_amdgpu.txt` | Recommendation, untested on hardware |
+| `virtio` | virtio GPU | `packages/gpu-virtio.txt` | VM-verified |
+| `generic` | Anything else | `packages/gpu-generic.txt` | Recommendation, untested on hardware |
+
+Hybrid machines (two families at once) install both families plus `packages/gpu-prime-offload.txt` (`nvidia-prime`): the integrated GPU drives the displays and the compositor receives no NVIDIA environment; programs run on the NVIDIA GPU through `prime-run`. Status: Recommendation, untested on hardware. `scripts/gpu-setup.sh` resolves and installs the stack (dry run by default; `--list` prints this table's status from the catalogue). When any family installs a DKMS module, the headers of every installed kernel are added (`linux-headers`, `linux-zen-headers`, ...). With Secure Boot enabled and a DKMS module in the stack, the tooling prints a warning naming the consequence and the two ways out (enrol a key with `sbctl`, or disable Secure Boot); it neither installs silently nor refuses.
+
 ## Release interpretation
 
 The repository reproduces the public workstation layers listed above. It does **not** claim that excluded personal services, application data, histories, credentials, device identities, private media or exact storage hardware are reproduced. Graphical, hardware and privileged effects remain destination-side acceptance tests and are never simulated as if they had run.

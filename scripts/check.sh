@@ -78,6 +78,9 @@ stage 'default profile baseline'
 stage 'selector registry'
 "$repo_root/scripts/check-selectors.sh"
 
+stage 'gpu catalogue'
+"$repo_root/scripts/check-gpu-catalogue.sh"
+
 stage 'i18n coverage'
 "$repo_root/scripts/check-i18n-coverage.sh"
 
@@ -90,6 +93,8 @@ trap 'rm -rf -- "$dry_home"' EXIT
 HOME="$dry_home" XDG_STATE_HOME="$dry_home/.local/state" "$repo_root/scripts/deploy.sh" --all --dry-run
 HOME="$dry_home" XDG_STATE_HOME="$dry_home/.local/state" FACTS_FILE="$repo_root/tests/golden/vm-virtio/hardware-facts" \
 	"$repo_root/scripts/render-config.sh" --dry-run
+HOME="$dry_home" XDG_STATE_HOME="$dry_home/.local/state" FACTS_FILE="$repo_root/tests/golden/vm-virtio/hardware-facts" \
+	FACTS_OVERRIDE="$dry_home/none" "$repo_root/scripts/gpu-setup.sh" --dry-run
 rm -rf -- "$dry_home"
 trap - EXIT
 
