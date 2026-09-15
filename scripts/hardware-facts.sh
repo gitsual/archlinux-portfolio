@@ -19,13 +19,13 @@ source "$repo_root/lib/kv.sh"
 source "$repo_root/lib/facts.sh"
 # shellcheck source=lib/gpu.sh
 source "$repo_root/lib/gpu.sh"
-for detector in chassis power input net graphics kernels display; do
+for detector in chassis power input net thermal graphics kernels display; do
 	# shellcheck source=/dev/null
 	source "$repo_root/lib/detect/$detector.sh"
 done
 
-facts_file="${FACTS_FILE:-${XDG_STATE_HOME:-$HOME/.local/state}/archlinux-portfolio/hardware-facts}"
-facts_override="${FACTS_OVERRIDE:-${XDG_CONFIG_HOME:-$HOME/.config}/archlinux-portfolio/hardware-facts.override}"
+facts_file="${FACTS_FILE:-${XDG_STATE_HOME:-$HOME/.local/state}/hipurbia/hardware-facts}"
+facts_override="${FACTS_OVERRIDE:-${XDG_CONFIG_HOME:-$HOME/.config}/hipurbia/hardware-facts.override}"
 action=''
 print_key=''
 
@@ -99,6 +99,7 @@ collect() {
 	out['has_touchpad']="$(detect_has_touchpad)"
 	out['has_wifi']="$(detect_has_wifi)"
 	out['has_bluetooth']="$(detect_has_bluetooth)"
+	out['cpu_temp_path']="$(detect_cpu_temp_path)"
 	out['gpu_vendors']="$(detect_gpu_vendors)"
 	out['gpu_devices']="$(detect_gpu_devices)"
 	out['gpu_hybrid']="$(detect_gpu_hybrid)"

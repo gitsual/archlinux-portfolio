@@ -51,7 +51,12 @@ if find . \( -path ./.git -o -path ./.vm-test -o -path ./.vm-image -o -path ./di
 	printf '%s\n' 'broken symlink found' >&2
 	exit 1
 fi
-if find . \( -path ./.git -o -path ./.vm-test -o -path ./.vm-image -o -path ./dist -o -path ./.audit \) -prune -o -type f ! -path './dotfiles/hypr/.local/share/wallpapers/warm-night.png' -print0 | xargs -0 file | grep -Ev 'text|empty|SVG|JSON|Python script|shell script' >/dev/null; then
+# The synthetic /sys trees under tests/fixtures are exempt. Their contents are
+# whatever the kernel writes in that file — a bare driver name, a raw
+# millidegree count — and `file` guesses wildly on inputs that short: an
+# hwmon `name` holding "coretemp" is reported as a Xenix core file. The shape
+# of those files is not ours to change, so the scan does not read them.
+if find . \( -path ./.git -o -path ./.vm-test -o -path ./.vm-image -o -path ./dist -o -path ./.audit -o -path './tests/fixtures/*/sysroot/sys' \) -prune -o -type f ! -path './dotfiles/hypr/.local/share/wallpapers/warm-night.png' -print0 | xargs -0 file | grep -Ev 'text|empty|SVG|JSON|Python script|shell script' >/dev/null; then
 	printf '%s\n' 'unexpected binary file found' >&2
 	exit 1
 fi
@@ -91,7 +96,7 @@ stage 'unit and fixture tests'
 "$repo_root/tests/run.sh"
 
 stage 'deployment script dry run'
-dry_home="$(mktemp -d "${TMPDIR:-/tmp}/archportfolio-dry-run.XXXXXX")"
+dry_home="$(mktemp -d "${TMPDIR:-/tmp}/hipurbia-dry-run.XXXXXX")"
 trap 'rm -rf -- "$dry_home"' EXIT
 HOME="$dry_home" XDG_STATE_HOME="$dry_home/.local/state" "$repo_root/scripts/deploy.sh" --all --dry-run
 HOME="$dry_home" XDG_STATE_HOME="$dry_home/.local/state" FACTS_FILE="$repo_root/tests/golden/vm-virtio/hardware-facts" \

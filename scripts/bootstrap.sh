@@ -10,15 +10,15 @@ source "$repo_root/lib/facts.sh"
 source "$repo_root/lib/selectors.sh"
 # shellcheck source=lib/i18n.sh
 source "$repo_root/lib/i18n.sh"
-for detector in chassis power input net graphics kernels display; do
+for detector in chassis power input net thermal graphics kernels display; do
 	# shellcheck source=/dev/null
 	source "$repo_root/lib/detect/$detector.sh"
 done
 selectors_load "${SELECTORS_FILE:-$repo_root/data/selectors.tsv}"
 
 # Messages follow the session locale (the --locale axis sets it system-wide);
-# PORTFOLIO_LANG overrides for one run. C and POSIX mean the reference table.
-language="${PORTFOLIO_LANG:-${LANG:-en}}"
+# HIPURBIA_LANG overrides for one run. C and POSIX mean the reference table.
+language="${HIPURBIA_LANG:-${LANG:-en}}"
 language="${language%%[_.@]*}"
 [[ "$language" =~ ^[a-z]{2,3}$ ]] || language=en
 i18n_load "$language" "${I18N_DIR:-$repo_root/i18n}" 2>/dev/null || i18n_load en "${I18N_DIR:-$repo_root/i18n}"
@@ -59,6 +59,7 @@ facts['has_backlight']="$(detect_has_backlight)"
 facts['has_touchpad']="$(detect_has_touchpad)"
 facts['has_wifi']="$(detect_has_wifi)"
 facts['has_bluetooth']="$(detect_has_bluetooth)"
+facts['cpu_temp_path']="$(detect_cpu_temp_path)"
 facts['gpu_vendors']="$(detect_gpu_vendors)"
 facts['gpu_devices']="$(detect_gpu_devices)"
 facts['gpu_hybrid']="$(detect_gpu_hybrid)"
@@ -136,9 +137,18 @@ mapfile -t aur < <(grep -Ev '^[[:space:]]*(#|$)' "$repo_root/packages/aur.txt")
 # registry is the only place a selector and its packages are tied together.
 for id in "${requested_selectors[@]}"; do
 	mapfile -t optional < <(grep -Ev '^[[:space:]]*(#|$)' "$repo_root/${SELECTOR_MANIFEST["$id"]}")
-	official+=("${optional[@]}")
+	official+=("${optional[@]:-}")
+	# A selector may also name packages that only exist as AUR build recipes,
+	# in a sibling manifest. They are kept apart because installing them is a
+	# different act: pacman fetches a binary, the AUR compiles one here.
+	aur_manifest="$repo_root/${SELECTOR_MANIFEST["$id"]%.txt}-aur.txt"
+	if [[ -f "$aur_manifest" ]]; then
+		mapfile -t optional_aur < <(grep -Ev '^[[:space:]]*(#|$)' "$aur_manifest")
+		aur+=("${optional_aur[@]:-}")
+	fi
 done
-mapfile -t official < <(printf '%s\n' "${official[@]}" | LC_ALL=C sort -u)
+mapfile -t official < <(printf '%s\n' "${official[@]}" | grep -v '^$' | LC_ALL=C sort -u)
+mapfile -t aur < <(printf '%s\n' "${aur[@]:-}" | grep -v '^$' | LC_ALL=C sort -u)
 
 system_args=()
 $desktop_login && system_args+=(--desktop-login)
@@ -149,7 +159,7 @@ if $dry_run; then
 	printf 'would install official packages (%d): %s\n' "${#official[@]}" "${official[*]}"
 	((${#aur[@]})) && printf 'would install AUR packages (%d): %s\n' "${#aur[@]}" "${aur[*]}"
 	HOME="${HOME}" "$repo_root/scripts/deploy.sh" --all --dry-run
-	facts_preview="$(mktemp "${TMPDIR:-/tmp}/archportfolio-facts.XXXXXX")"
+	facts_preview="$(mktemp "${TMPDIR:-/tmp}/hipurbia-facts.XXXXXX")"
 	"$repo_root/scripts/hardware-facts.sh" --dry-run >"$facts_preview"
 	FACTS_FILE="$facts_preview" "$repo_root/scripts/render-config.sh" --dry-run
 	rm -f -- "$facts_preview"
@@ -164,16 +174,12 @@ if ! $no_install; then
 	$noninteractive && pacman_args+=(--noconfirm)
 	sudo pacman "${pacman_args[@]}" -- "${official[@]}"
 	if ((${#aur[@]})); then
-		helper=""
-		command -v paru >/dev/null && helper=paru
-		command -v yay >/dev/null && helper=yay
-		[[ -n "$helper" ]] || {
-			printf 'AUR packages exist but no paru/yay helper is installed.\n' >&2
-			exit 1
-		}
-		aur_args=(-S --needed)
+		# One place owns the decision to compile from the AUR, and it neither
+		# needs nor installs a helper: every name is built from its own recipe
+		# against the pacman that is on this machine.
+		aur_args=()
 		$noninteractive && aur_args+=(--noconfirm)
-		"$helper" "${aur_args[@]}" -- "${aur[@]}"
+		"$repo_root/scripts/aur-install.sh" "${aur_args[@]}" -- "${aur[@]}"
 	fi
 fi
 

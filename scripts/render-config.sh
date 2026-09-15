@@ -25,12 +25,11 @@ source "$repo_root/lib/render.sh"
 # shellcheck source=lib/settings.sh
 source "$repo_root/lib/settings.sh"
 
-theme="${THEME_FILE:-$repo_root/data/theme.conf}"
 render_dir="${RENDER_DIR:-$repo_root/render}"
-facts_file="${FACTS_FILE:-${XDG_STATE_HOME:-$HOME/.local/state}/archlinux-portfolio/hardware-facts}"
-facts_override="${FACTS_OVERRIDE:-${XDG_CONFIG_HOME:-$HOME/.config}/archlinux-portfolio/hardware-facts.override}"
-settings_file="${SETTINGS_FILE:-${XDG_CONFIG_HOME:-$HOME/.config}/archlinux-portfolio/settings}"
-backup_root="${XDG_STATE_HOME:-$HOME/.local/state}/archlinux-portfolio/backups/$(date -u +%Y%m%dT%H%M%SZ)"
+facts_file="${FACTS_FILE:-${XDG_STATE_HOME:-$HOME/.local/state}/hipurbia/hardware-facts}"
+facts_override="${FACTS_OVERRIDE:-${XDG_CONFIG_HOME:-$HOME/.config}/hipurbia/hardware-facts.override}"
+settings_file="${SETTINGS_FILE:-${XDG_CONFIG_HOME:-$HOME/.config}/hipurbia/settings}"
+backup_root="${XDG_STATE_HOME:-$HOME/.local/state}/hipurbia/backups/$(date -u +%Y%m%dT%H%M%SZ)"
 
 usage() {
 	cat <<'USAGE'
@@ -42,7 +41,7 @@ Usage: scripts/render-config.sh --committed | --deploy | --dry-run | --check-dri
   --check-drift  verify the deployed renders still match a fresh render
 
 Deploy-time output never lands inside the checkout. Existing files move to
-${XDG_STATE_HOME:-~/.local/state}/archlinux-portfolio/backups/<stamp>/ first.
+${XDG_STATE_HOME:-~/.local/state}/hipurbia/backups/<stamp>/ first.
 Overrides: THEME_FILE, FACTS_FILE, FACTS_OVERRIDE, SETTINGS_FILE, RENDER_DIR, XDG_CONFIG_HOME.
 USAGE
 }
@@ -73,6 +72,26 @@ if [[ "$mode" == committed ]]; then
 	exec "$repo_root/scripts/check-theme-drift.sh" --render
 fi
 
+# Settings are the chosen values (language axes); they become tokens the same
+# way facts do, under their own prefix so a template says which it means.
+settings_load "$settings_file"
+
+# The catalogue is resolved after the settings are read, because the chosen
+# theme is one of them. THEME_FILE still wins: the gates render an explicit
+# file. The default name resolves to data/theme.conf, the palette every
+# committed dotfile was rendered from, so choosing nothing changes nothing.
+if [[ -n "${THEME_FILE:-}" ]]; then
+	theme="$THEME_FILE"
+elif [[ "${SETTINGS[theme]}" == warm-night ]]; then
+	theme="$repo_root/data/theme.conf"
+else
+	theme="$repo_root/data/themes/${SETTINGS[theme]}.conf"
+	[[ -f "$theme" ]] || {
+		printf 'no theme named %s; the catalogue holds: %s\n' "${SETTINGS[theme]}" \
+			"$(find "$repo_root/data/themes" -name '*.conf' -printf '%f\n' | sed 's/\.conf$//' | LC_ALL=C sort | tr '\n' ' ')" >&2
+		exit 1
+	}
+fi
 render_load_tokens "$theme"
 [[ -r "$facts_file" || -r "$facts_override" ]] || {
 	printf 'no hardware facts at %s; run scripts/hardware-facts.sh --emit first\n' "$facts_file" >&2
@@ -82,9 +101,6 @@ if [[ -r "$facts_file" ]]; then
 	facts_require_schema "$facts_file"
 fi
 render_load_facts "$facts_file" "$facts_override"
-# Settings are the chosen values (language axes); they become tokens the same
-# way facts do, under their own prefix so a template says which it means.
-settings_load "$settings_file"
 for key in "${!SETTINGS[@]}"; do
 	RENDER_TOKENS["SETTING_${key^^}"]="${SETTINGS["$key"]}"
 	# ...and as setting_<key> for line guards, next to the facts.
@@ -114,7 +130,7 @@ backup_path() {
 	printf '%s/%s' "$backup_root" "$relative"
 }
 
-scratch="$(mktemp -d "${TMPDIR:-/tmp}/archportfolio-deploy-render.XXXXXX")"
+scratch="$(mktemp -d "${TMPDIR:-/tmp}/hipurbia-deploy-render.XXXXXX")"
 trap 'rm -rf -- "$scratch"' EXIT
 
 status=0

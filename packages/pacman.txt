@@ -6,6 +6,7 @@ bluez-utils
 btrfs-progs
 clamav
 cryptsetup
+curl
 dmenu
 dunst
 fd
@@ -21,6 +22,7 @@ jq
 keepassxc
 kitty
 libnotify
+librsvg
 lynis
 neovim
 networkmanager
