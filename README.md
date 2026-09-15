@@ -67,6 +67,16 @@ Deploy selected packages:
 
 Existing files are never deleted. Conflicts move to a timestamped backup under `${XDG_STATE_HOME:-$HOME/.local/state}/archlinux-portfolio/backups/`. Stow runs with `--no-folding`, so local hardware overlays cannot write through a linked directory into the repository.
 
+Two things are not stowed because they differ per machine: the Waybar config and the Hyprland fragments for monitors, input devices and the GPU. They are rendered from detected hardware facts into `$XDG_CONFIG_HOME`, never into the checkout, and replaced files go to the same backup location:
+
+```bash
+./scripts/hardware-facts.sh --emit     # detect once; correct with the override file
+./scripts/render-config.sh --deploy    # or --dry-run to see what would change
+./scripts/render-config.sh --check-drift
+```
+
+`scripts/bootstrap.sh` runs both steps after Stow.
+
 ## Repository map
 
 ```text
@@ -80,7 +90,9 @@ dotfiles/              User-level Stow packages
   security/            User malware timer and audit command
   automation/          Generic local service and timer framework
 system/                Reviewed system-level templates, including optional login
-profiles/              Optional GPU, audio, automation and VM package profiles
+profiles/              Optional audio, automation and VM package profiles
+render/                Deploy-time templates rendered from hardware facts into $XDG_CONFIG_HOME
+templates/             Themed templates rendered from data/theme.conf into dotfiles/
 packages/              Base and composable official/AUR manifests
 docs/                  Architecture, coverage, VM validation and publication copy
 scripts/               Bootstrap, deploy, render, audit and real-VM test tools
@@ -101,13 +113,13 @@ scripts/               Bootstrap, deploy, render, audit and real-VM test tools
 
 ## Hardware profiles
 
-The portable Hyprland baseline does not force a GPU. To reproduce the NVIDIA branch used by the source workstation, replace the deployed `hardware.conf` symlink with a local copy of `profiles/hardware/nvidia-hyprland.conf`. Audio device node names are rendered locally by `scripts/configure-audio.py` and are never committed.
+The portable Hyprland baseline does not force a GPU. `render/hypr/generated/hardware.conf.in` emits the NVIDIA Wayland environment only when the detected facts say NVIDIA is the sole GPU, and a software cursor on NVIDIA and virtual machines; every other machine gets an empty fragment. To change what was detected, write the corrected fact to `~/.config/archlinux-portfolio/hardware-facts.override` and re-run `scripts/render-config.sh --deploy`. Audio device node names are rendered locally by `scripts/configure-audio.py` and are never committed.
 
 The original Warm Night · Nocturne wallpaper is bundled as SVG source and a 4K PNG. The desktop starts it with `swaybg`, including on virtual GPUs without accelerated rendering. The header SVG is a stylized preview, not a real desktop capture.
 
 ## Verification
 
-`scripts/check.sh` validates shell, Python, JSON, Lua, systemd units, all package manifests, symlinks, file types and privacy patterns, verifies every bundled asset against `data/asset-manifest.tsv`, runs the behaviour tests in `tests/cases/`, runs Gitleaks, and performs both a dry run and a two-pass deployment regression in temporary HOMEs. `scripts/test-neovim.sh` performs the separate clean editor installation without calling external AI services. `scripts/test-vm.sh` installs and exercises the current tree in an official Arch QEMU/KVM guest. Publication also requires scanning the exact staged Git objects and resulting commit before push.
+`scripts/check.sh` validates shell, Python, JSON, Lua, systemd units, all package manifests, symlinks, file types and privacy patterns, verifies every bundled asset against `data/asset-manifest.tsv`, runs the behaviour tests in `tests/cases/`, runs Gitleaks, performs both a dry run and a two-pass deployment regression in temporary HOMEs, and checks deployment integrity: Stow and the machine-specific renders never claim the same path, never write into the checkout, and every package and Hyprland fragment is accounted for. `scripts/test-neovim.sh` performs the separate clean editor installation without calling external AI services. `scripts/test-vm.sh` installs and exercises the current tree in an official Arch QEMU/KVM guest. Publication also requires scanning the exact staged Git objects and resulting commit before push.
 
 Every claim in this repository rests on author-run evidence, not CI: these checks are run by hand on the author's machine and in a local VM before publication. There is no hosted pipeline re-running them on each commit, and nothing here should be read as if there were.
 

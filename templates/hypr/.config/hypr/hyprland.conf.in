@@ -21,8 +21,8 @@ general {
     gaps_in = 8
     gaps_out = 15
     border_size = 3
-    col.active_border = rgb(E1777D) rgb(979367) 45deg
-    col.inactive_border = rgb(7C606E)
+    col.active_border = rgb(@COLOR_ACCENT@) rgb(@COLOR_MUTED@) 45deg
+    col.inactive_border = rgb(@COLOR_BORDER_INACTIVE@)
     layout = dwindle
 }
 
@@ -52,7 +52,7 @@ master { new_on_top = true }
 
 bind = SUPER, Return, exec, $terminal
 bind = SUPER, R, exec, $menu
-bind = SUPER, D, exec, dmenu_run -fn 'JetBrains Mono Nerd Font-12' -nb '#2D1F2D' -nf '#E8D5AB' -sb '#E1777D' -sf '#2D1F2D'
+bind = SUPER, D, exec, dmenu_run -fn 'JetBrains Mono Nerd Font-12' -nb '#@COLOR_BG@' -nf '#@COLOR_FG@' -sb '#@COLOR_ACCENT@' -sf '#@COLOR_BG@'
 bind = SUPER ALT, R, exec, wofi --show drun
 bind = SUPER, E, exec, $terminal -e nvim
 bind = SUPER, Q, killactive
