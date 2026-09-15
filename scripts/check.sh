@@ -70,6 +70,9 @@ else
 	printf '%s\n' 'gitleaks not installed; explicit privacy scanner completed'
 fi
 
+stage 'default profile baseline'
+"$repo_root/scripts/freeze-baseline.sh"
+
 stage 'unit and fixture tests'
 "$repo_root/tests/run.sh"
 
