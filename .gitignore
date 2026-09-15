@@ -24,3 +24,6 @@
 **/credentials*
 **/tokens*
 **/cookies*
+
+# SDD session artifacts
+.atl/
