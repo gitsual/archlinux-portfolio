@@ -162,8 +162,8 @@ cd "$HOME/archlinux-portfolio"
 # Three language axes with three distinguishable values, so each assertion
 # below can only be satisfied by its own writer.
 mkdir -p "$HOME/.config/archlinux-portfolio"
-printf 'locale=es_ES.UTF-8\nkeymap=%s\nxkb_layout=fr\n' "$CONSOLE_KEYMAP" >"$HOME/.config/archlinux-portfolio/settings"
-./scripts/bootstrap.sh --noconfirm --desktop-login --vm
+printf 'locale=es_ES.UTF-8\nkeymap=%s\nxkb_layout=fr\nime=fcitx5\n' "$CONSOLE_KEYMAP" >"$HOME/.config/archlinux-portfolio/settings"
+./scripts/bootstrap.sh --noconfirm --desktop-login --vm --desktop --ime --ricer --gui-greeter
 ./scripts/apply-system.sh --locale --keymap
 grep -Fxq 'LANG=es_ES.UTF-8' /etc/locale.conf
 LC_ALL=C locale -a | grep -Fxq 'es_ES.utf8'
@@ -171,6 +171,12 @@ grep -Fxq "KEYMAP=$CONSOLE_KEYMAP" /etc/vconsole.conf
 grep -Fxq '    kb_layout = fr' "$HOME/.config/hypr/generated/input.conf"
 ./scripts/test-neovim.sh
 ./scripts/apply-system.sh --dry-run --desktop-login --vm
+# The graphical greeter is rendered, not installed (the guest keeps its
+# autologin): its two axes carry the seeded locale and layout, distinct from
+# each other and from the console keymap.
+greeter_plan="$(./scripts/apply-system.sh --dry-run --greeter)"
+grep -q 'LANG=es_ES.UTF-8 XKB_DEFAULT_LAYOUT=fr cage -s -- regreet' <<<"$greeter_plan"
+pacman -Qq greetd-regreet cage >/dev/null
 mkdir -p /tmp/portfolio-runtime
 chmod 700 /tmp/portfolio-runtime
 XDG_RUNTIME_DIR=/tmp/portfolio-runtime Hyprland --verify-config -c "$HOME/.config/hypr/hyprland.conf"
@@ -192,7 +198,26 @@ printf '# local edit\n' >>"$HOME/.config/hypr/generated/hardware.conf"
 ./scripts/render-config.sh --deploy >/dev/null
 gpu_restore="$(./scripts/gpu-setup.sh --restore-config --dry-run)"
 grep -q '^would restore' <<<"$gpu_restore"
-for executable in Hyprland waybar kitty dunst rofi dmenu_run wofi nvim clamscan ufw greetd tuigreet; do
+# The input method reaches the compositor through the input fragment only,
+# and CJK and emoji resolve by code point to installed fonts.
+grep -Fxq 'env = QT_IM_MODULE,fcitx' "$HOME/.config/hypr/generated/input.conf"
+grep -Fxq 'exec-once = fcitx5 -d' "$HOME/.config/hypr/generated/input.conf"
+! grep -rq fcitx "$HOME/.config/hypr/generated/hardware.conf" "$HOME/.config/hypr/generated/monitors.conf" "$HOME/.config/waybar/config"
+command -v fcitx5 >/dev/null
+fc-match -f '%{family}\n' ':charset=4e2d' | grep -q CJK
+fc-match -f '%{family}\n' ':charset=3042' | grep -q CJK
+fc-match -f '%{family}\n' ':charset=1f600' | grep -qi emoji
+# Ricing tools: installed, configured through Stow, and hypridle wired into
+# the session (whether it is running after a login is a destination test).
+for executable in hypridle nwg-bar cliphist swappy wf-recorder nwg-look qt6ct; do
+  command -v "$executable" >/dev/null
+done
+test -L "$HOME/.config/hypr/hypridle.conf"
+test -L "$HOME/.config/nwg-bar/bar.json"
+grep -Fxq 'exec-once = hypridle' "$HOME/.config/hypr/hyprland.conf"
+# Every package the desktop selector promises is installed.
+pacman -Qq $(grep -Ev '^[[:space:]]*(#|$)' packages/desktop.txt) >/dev/null
+for executable in Hyprland waybar kitty dunst rofi dmenu_run wofi nvim clamscan ufw greetd tuigreet firefox thunar mpv; do
   command -v "$executable" >/dev/null
  done
 printf '%s\n' 'VM_ACCEPTANCE: PASS'

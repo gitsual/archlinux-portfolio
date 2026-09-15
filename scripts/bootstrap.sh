@@ -31,6 +31,7 @@ vm_profile=false
 noninteractive=false
 list_selectors=false
 requested_selectors=()
+gui_greeter=false
 
 usage() {
 	cat <<'USAGE'
@@ -118,6 +119,7 @@ for id in "${requested_selectors[@]}"; do
 	case "$id" in
 	desktop-login) desktop_login=true ;;
 	vm) vm_profile=true ;;
+	gui-greeter) gui_greeter=true ;;
 	esac
 done
 
@@ -130,19 +132,18 @@ source /etc/os-release
 
 mapfile -t official < <(grep -Ev '^[[:space:]]*(#|$)' "$repo_root/packages/pacman.txt")
 mapfile -t aur < <(grep -Ev '^[[:space:]]*(#|$)' "$repo_root/packages/aur.txt")
-if $desktop_login; then
-	mapfile -t optional < <(grep -Ev '^[[:space:]]*(#|$)' "$repo_root/packages/desktop-login.txt")
+# Every requested selector contributes its manifest from the registry; the
+# registry is the only place a selector and its packages are tied together.
+for id in "${requested_selectors[@]}"; do
+	mapfile -t optional < <(grep -Ev '^[[:space:]]*(#|$)' "$repo_root/${SELECTOR_MANIFEST["$id"]}")
 	official+=("${optional[@]}")
-fi
-if $vm_profile; then
-	mapfile -t optional < <(grep -Ev '^[[:space:]]*(#|$)' "$repo_root/packages/vm.txt")
-	official+=("${optional[@]}")
-fi
+done
 mapfile -t official < <(printf '%s\n' "${official[@]}" | LC_ALL=C sort -u)
 
 system_args=()
 $desktop_login && system_args+=(--desktop-login)
 $vm_profile && system_args+=(--vm)
+$gui_greeter && system_args+=(--greeter)
 
 if $dry_run; then
 	printf 'would install official packages (%d): %s\n' "${#official[@]}" "${official[*]}"

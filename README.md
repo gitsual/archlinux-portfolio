@@ -129,6 +129,22 @@ A hybrid machine gets both families plus `nvidia-prime`; a DKMS stack gets the h
 
 The original Warm Night · Nocturne wallpaper is bundled as SVG source and a 4K PNG. The desktop starts it with `swaybg`, including on virtual GPUs without accelerated rendering. The header SVG is a stylized preview, not a real desktop capture.
 
+## Optional selectors
+
+`bootstrap.sh --list-selectors` prints the optional package sets and whether each applies to this machine; `--desktop` adds the everyday applications (`packages/desktop.txt`: browser, file manager, image and PDF viewers, media player, office suite) on top of the base profile, which a test keeps byte-identical without the flag.
+
+## Ricing tools
+
+`bootstrap.sh --ricer` adds the customisation set (`packages/ricer.txt`, all from the official repositories: `cliphist`, `swappy`, `wf-recorder`, `nwg-look`, `qt6ct`, `kvantum`, `nwg-bar`). `hypridle` is part of the base and starts with the session: lock after five minutes, screen off after ten, suspend after thirty. `Super+Shift+Q` opens the `nwg-bar` power menu beside the rofi one on `Super+Shift+E`, with the same five entries; `Super+V` picks from the clipboard history. `packages/aur.txt` stays empty and `wlogout` is never installed, both pinned by a test.
+
+## Workspaces
+
+Ten numbered workspaces, `Super+1` to `Super+9` and `Super+0` for the tenth, `Super+Shift` to move a window there, and `Super+[` / `Super+]` to walk them with wraparound. Special workspaces are never part of that sequence. Waybar shows all ten by number, each occupied one followed by a glyph per window (`dotfiles/waybar/.config/waybar/workspace-icons.json`: class first, then a class prefix, then a title fragment, then a default), the active one underlined and an urgent one in italics. The strip is a `custom/ws` module fed by `ws-refresh.sh`, a `socat` listener on Hyprland's event socket that debounces a burst, takes one `hyprctl` snapshot and signals Waybar; nothing polls.
+
+## Help panes
+
+`F1` to `F5` open a rofi pane with the keys of Hyprland, the browser, the shell, the editor and the system, described in the session language. The rows come from `data/help-registry.tsv`; the Hyprland pane also reads `hyprctl binds -j`, and a live bind the registry does not know is shown as `UNREGISTERED` rather than dropped. Every bind in the Hyprland template carries a `# @help:` line above it, and `check.sh` refuses a bind without one, a registry row without a bind, or a label missing from the English table. A description is text: selecting a row acts on the registry's action column, never on the translation. `docs/keys.md` is the same registry for readers without a session.
+
 ## Language axes
 
 Locale, console keymap and Hyprland keyboard layout are three separate choices, and each has exactly one writer. They are read from `~/.config/archlinux-portfolio/settings` (see `settings.example`; a missing file means the source workstation's values):
@@ -139,6 +155,12 @@ sudo -v && ./scripts/apply-system.sh --locale --keymap   # /etc/locale.conf + lo
 ```
 
 A test pins the single-writer rule and another that `LC_ALL=C` is only ever pinned at parser call sites, never exported.
+
+The base profile installs Noto (Latin, CJK, emoji) so any script renders; the VM gate asks `fc-match` by code point, not by family name. An input method is a fourth setting, `ime=fcitx5` (default `none`): it adds the fcitx5 environment and daemon start to the input fragment and nothing else, and `bootstrap.sh --ime` installs fcitx5 with Mozc.
+
+## Graphical login
+
+`--desktop-login` installs greetd with tuigreet, as before. `bootstrap.sh --gui-greeter` (or `apply-system.sh --greeter`) installs ReGreet inside a cage kiosk instead, styled from the palette (`templates/system/etc/greetd/regreet.css.in`). The greeter has two language axes of its own, rendered from the settings file into greetd's command: `LANG` for the greeter process and `XKB_DEFAULT_LAYOUT` for the keyboard cage hands it. Each is written in exactly one place, pinned by the same test as the session's axes. The test VM keeps its passwordless autologin, frozen byte-for-byte.
 
 ## Verification
 
