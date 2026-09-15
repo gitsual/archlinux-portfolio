@@ -15,11 +15,11 @@ stage() {
 }
 
 stage 'shell syntax'
-while IFS= read -r -d '' file; do bash -n "$file"; done < <(find scripts dotfiles -type f \( -name '*.sh' -o -name 'workstation-security-audit' \) -print0)
+while IFS= read -r -d '' file; do bash -n "$file"; done < <(find scripts dotfiles lib tests -type f \( -name '*.sh' -o -name 'workstation-security-audit' \) -print0)
 
 stage 'shellcheck'
 if command -v shellcheck >/dev/null; then
-	mapfile -d '' shell_files < <(find scripts dotfiles -type f \( -name '*.sh' -o -name 'workstation-security-audit' \) -print0)
+	mapfile -d '' shell_files < <(find scripts dotfiles lib tests -type f \( -name '*.sh' -o -name 'workstation-security-audit' \) -print0)
 	shellcheck "${shell_files[@]}"
 else
 	printf '%s\n' 'shellcheck not installed; syntax checks still ran'
